@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
-// Tabela Fipe simplificada (valores médios de referência)
 const TABELA_FIPE: Record<string, number> = {
   'honda civic': 65000,
   'toyota corolla': 70000,
@@ -21,7 +18,6 @@ function obterValorFipe(titulo: string): number {
   for (const [modelo, valor] of Object.entries(TABELA_FIPE)) {
     if (tituloLower.includes(modelo)) return valor;
   }
-  // Valor padrão para modelos não listados
   return 50000;
 }
 
@@ -40,34 +36,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Buscando veículos em ${config.regiao} até R$ ${config.precoMaximo}`);
-
-    // Simulação de resultados com filtro abaixo da Fipe
     const todosVeiculos = [
-      { id: 1, titulo: 'Honda Civic EXL 2.0 Flexone 16V Aut.', preco: 'R$ 45.900', ano: 2018, km: '65.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 2, titulo: 'Toyota Corolla XEi 2.0 Dual VVT-iE Aut.', preco: 'R$ 48.500', ano: 2019, km: '52.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 3, titulo: 'Hyundai HB20S Vision 1.6 Flex Aut.', preco: 'R$ 38.900', ano: 2017, km: '78.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 4, titulo: 'VW Gol 1.6 MSI Trendline', preco: 'R$ 32.000', ano: 2019, km: '45.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 5, titulo: 'Chevrolet Onix 1.4 LT', preco: 'R$ 35.500', ano: 2020, km: '38.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 6, titulo: 'Fiat Uno Vivace 1.0', preco: 'R$ 28.000', ano: 2018, km: '55.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 7, titulo: 'Ford Ka SE 1.5 Ti-VCT', preco: 'R$ 33.000', ano: 2019, km: '42.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 8, titulo: 'Renault Kwid Zen 1.0', preco: 'R$ 29.500', ano: 2020, km: '30.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 9, titulo: 'Nissan Versa Exclusive 1.6', preco: 'R$ 52.000', ano: 2018, km: '60.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
-      { id: 10, titulo: 'Jeep Renegade Longitude 1.8', preco: 'R$ 68.000', ano: 2019, km: '48.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 1, titulo: 'Honda Civic EXL 2.0 Flexone 16V Aut.', preco: 'R$ 45.900', ano: 2018, km: '65.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 2, titulo: 'Toyota Corolla XEi 2.0 Dual VVT-iE Aut.', preco: 'R$ 48.500', ano: 2019, km: '52.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 3, titulo: 'Hyundai HB20S Vision 1.6 Flex Aut.', preco: 'R$ 38.900', ano: 2017, km: '78.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 4, titulo: 'VW Gol 1.6 MSI Trendline', preco: 'R$ 32.000', ano: 2019, km: '45.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 5, titulo: 'Chevrolet Onix 1.4 LT', preco: 'R$ 35.500', ano: 2020, km: '38.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 6, titulo: 'Fiat Uno Vivace 1.0', preco: 'R$ 28.000', ano: 2018, km: '55.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 7, titulo: 'Ford Ka SE 1.5 Ti-VCT', preco: 'R$ 33.000', ano: 2019, km: '42.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 8, titulo: 'Renault Kwid Zen 1.0', preco: 'R$ 29.500', ano: 2020, km: '30.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 9, titulo: 'Nissan Versa Exclusive 1.6', preco: 'R$ 52.000', ano: 2018, km: '60.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
+      { id: 10, titulo: 'Jeep Renegade Longitude 1.8', preco: 'R$ 68.000', ano: 2019, km: '48.000 km', localizacao: `${config.regiao} - PE`, link: '#' },
     ];
 
-    // Filtrar: preço <= config.precoMaximo E abaixo da Tabela Fipe
     const veiculosAbaixoFipe = todosVeiculos.filter((veiculo) => {
       const precoAtual = extrairPrecoNumerico(veiculo.preco);
       const valorFipe = obterValorFipe(veiculo.titulo);
       const percentualFipe = (precoAtual / valorFipe) * 100;
-
       return precoAtual <= config.precoMaximo && percentualFipe < 100;
     }).map((veiculo) => {
       const precoAtual = extrairPrecoNumerico(veiculo.preco);
       const valorFipe = obterValorFipe(veiculo.titulo);
       const desconto = Math.round(((valorFipe - precoAtual) / valorFipe) * 100);
-
       return {
         ...veiculo,
         valorFipe: `R$ ${valorFipe.toLocaleString('pt-BR')}`,
@@ -75,19 +65,6 @@ export async function POST(request: NextRequest) {
         dataBusca: new Date().toLocaleString('pt-BR'),
       };
     });
-
-    // Salvar resultados
-    const resultadosPath = path.join(process.cwd(), 'data', 'resultados.json');
-    const dirPath = path.dirname(resultadosPath);
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-    fs.writeFileSync(resultadosPath, JSON.stringify({
-      dataBusca: new Date().toLocaleString('pt-BR'),
-      configuracoes: config,
-      totalEncontrado: veiculosAbaixoFipe.length,
-      anuncios: veiculosAbaixoFipe,
-    }, null, 2));
 
     return NextResponse.json({
       success: true,
