@@ -1,6 +1,4 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import carrosData from '../public/data/carros.json';
 
 interface Carro {
   id: number;
@@ -22,20 +20,8 @@ interface DadosBusca {
 }
 
 export default function Home() {
-  const [dados, setDados] = useState<DadosBusca>({ ultimaBusca: null, configuracao: {}, carros: [] });
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    fetch('/data/carros.json')
-      .then((r) => r.json())
-      .then((d) => {
-        setDados(d);
-        setCarregando(false);
-      })
-      .catch(() => setCarregando(false));
-  }, []);
-
-  const carros = dados.carros;
+  const dados = carrosData as DadosBusca;
+  const carros = dados.carros || [];
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -62,9 +48,7 @@ export default function Home() {
           </p>
         </div>
 
-        {carregando ? (
-          <div className="text-center py-20 text-gray-500">Carregando...</div>
-        ) : carros.length === 0 ? (
+        {carros.length === 0 ? (
           <div className="bg-gray-800 rounded-lg p-12 text-center border border-gray-700">
             <div className="text-6xl mb-4">🚗</div>
             <h3 className="text-lg font-medium text-gray-300 mb-2">Nenhum veículo encontrado ainda</h3>
@@ -106,11 +90,11 @@ export default function Home() {
                       )}
                       <div className="flex justify-between">
                         <span className="text-gray-500">Ano:</span>
-                        <span className="text-gray-300">{carro.ano}</span>
+                        <span className="text-gray-300">{carro.ano || '-'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">KM:</span>
-                        <span className="text-gray-300">{carro.km}</span>
+                        <span className="text-gray-300">{carro.km || '-'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Local:</span>
