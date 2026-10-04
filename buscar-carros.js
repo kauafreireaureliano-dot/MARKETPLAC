@@ -217,7 +217,7 @@ async function buscar() {
       carros: abaixoFipe.length > 0 ? abaixoFipe : carrosEncontrados,
     };
 
-    const dataDir = path.join(__dirname, 'data');
+    const dataDir = path.join(__dirname, 'public', 'data');
     if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
     const outputPath = path.join(dataDir, 'carros.json');
