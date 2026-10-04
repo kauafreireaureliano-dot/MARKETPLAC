@@ -15,273 +15,124 @@ interface Carro {
   dataBusca: string;
 }
 
-interface Configuracao {
-  regiao: string;
-  precoMaximo: number;
-  anoMinimo: number;
-  distanciaKm: number;
+interface DadosBusca {
+  ultimaBusca: string | null;
+  configuracao: Record<string, unknown>;
+  carros: Carro[];
 }
 
 export default function Home() {
-  const [carros, setCarros] = useState<Carro[]>([]);
-  const [configuracao, setConfiguracao] = useState<Configuracao>({
-    regiao: '',
-    precoMaximo: 50000,
-    anoMinimo: 2015,
-    distanciaKm: 100,
-  });
-  const [buscando, setBuscando] = useState(false);
-  const [ultimaBusca, setUltimaBusca] = useState<string>('');
-  const [erro, setErro] = useState<string>('');
+  const [dados, setDados] = useState<DadosBusca>({ ultimaBusca: null, configuracao: {}, carros: [] });
+  const [carregando, setCarregando] = useState(true);
 
-  // Carregar configurações salvas
   useEffect(() => {
-    const savedConfig = localStorage.getItem('configuracao');
-    if (savedConfig) {
-      setConfiguracao(JSON.parse(savedConfig));
-    }
-    const savedCarros = localStorage.getItem('carrosEncontrados');
-    if (savedCarros) {
-      setCarros(JSON.parse(savedCarros));
-      const savedData = localStorage.getItem('ultimaBusca');
-      if (savedData) setUltimaBusca(savedData);
-    }
+    fetch('/data/carros.json')
+      .then((r) => r.json())
+      .then((d) => {
+        setDados(d);
+        setCarregando(false);
+      })
+      .catch(() => setCarregando(false));
   }, []);
 
-  const salvarConfiguracao = (config: Configuracao) => {
-    setConfiguracao(config);
-    localStorage.setItem('configuracao', JSON.stringify(config));
-  };
-
-  const iniciarBusca = async () => {
-    if (!configuracao.regiao.trim()) {
-      setErro('Por favor, informe sua cidade/região');
-      return;
-    }
-    setErro('');
-    setBuscando(true);
-    setCarros([]);
-
-    try {
-      const response = await fetch('/api/buscar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(configuracao),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setCarros(data.anuncios);
-        localStorage.setItem('carrosEncontrados', JSON.stringify(data.anuncios));
-        const agora = new Date().toLocaleString('pt-BR');
-        setUltimaBusca(agora);
-        localStorage.setItem('ultimaBusca', agora);
-      } else {
-        setErro(data.error || 'Erro ao buscar veículos');
-      }
-    } catch (err) {
-      setErro('Erro de conexão. Tente novamente.');
-    } finally {
-      setBuscando(false);
-    }
-  };
+  const carros = dados.carros;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-blue-600 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold"> I9Car - Painel de Busca</h1>
-              <p className="text-blue-100 text-sm">Veículos abaixo da Tabela Fipe</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-blue-100">Última busca</p>
-              <p className="font-semibold">{ultimaBusca || 'Nunca'}</p>
-            </div>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <header className="bg-gray-800 border-b border-gray-700">
+        <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-orange-400">I9Car - Busca de Veículos</h1>
+            <p className="text-gray-400 text-sm">Oportunidades abaixo da Tabela Fipe</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-500">Última busca</p>
+            <p className="text-sm font-semibold text-gray-300">{dados.ultimaBusca || 'Nenhuma ainda'}</p>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Configurações */}
-        <section className="mb-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">⚙️ Configurações de Busca</h2>
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-6 bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <p className="text-gray-300 text-sm">
+            Para buscar carros novos, rode no terminal: <code className="bg-gray-700 px-2 py-1 rounded text-orange-400">node buscar-carros.js</code>
+          </p>
+          <p className="text-gray-500 text-xs mt-1">
+            O script vai abrir o Chrome, buscar no Marketplace e atualizar esta página automaticamente.
+          </p>
+        </div>
 
-          {erro && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {erro}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Região (Cidade)
-              </label>
-              <input
-                type="text"
-                value={configuracao.regiao}
-                onChange={(e) => salvarConfiguracao({ ...configuracao, regiao: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ex: Arcoverde"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Preço Máximo (R$)
-              </label>
-              <input
-                type="number"
-                value={configuracao.precoMaximo}
-                onChange={(e) => salvarConfiguracao({ ...configuracao, precoMaximo: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ano Mínimo
-              </label>
-              <input
-                type="number"
-                value={configuracao.anoMinimo}
-                onChange={(e) => salvarConfiguracao({ ...configuracao, anoMinimo: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Distância (km)
-              </label>
-              <input
-                type="number"
-                value={configuracao.distanciaKm}
-                onChange={(e) => salvarConfiguracao({ ...configuracao, distanciaKm: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+        {carregando ? (
+          <div className="text-center py-20 text-gray-500">Carregando...</div>
+        ) : carros.length === 0 ? (
+          <div className="bg-gray-800 rounded-lg p-12 text-center border border-gray-700">
+            <div className="text-6xl mb-4">🚗</div>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Nenhum veículo encontrado ainda</h3>
+            <p className="text-gray-500">Rode o script de busca para encontrar oportunidades</p>
           </div>
-
-          <button
-            onClick={iniciarBusca}
-            disabled={buscando}
-            className="mt-6 w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {buscando ? (
-              <>
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Buscando...
-              </>
-            ) : (
-              <>
-                🔍 Buscar Veículos Abaixo da Fipe
-              </>
-            )}
-          </button>
-        </section>
-
-        {/* Resultados */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">
-              📋 Veículos Encontrados ({carros.length})
-            </h2>
-            {carros.length > 0 && (
-              <button
-                onClick={() => {
-                  setCarros([]);
-                  localStorage.removeItem('carrosEncontrados');
-                  localStorage.removeItem('ultimaBusca');
-                  setUltimaBusca('');
-                }}
-                className="text-sm text-red-600 hover:text-red-800"
-              >
-                Limpar resultados
-              </button>
-            )}
-          </div>
-
-          {carros.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-              <div className="text-gray-400 text-6xl mb-4">🚗</div>
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
-                Nenhum veículo encontrado ainda
-              </h3>
-              <p className="text-gray-500">
-                Configure sua região e clique em "Buscar Veículos Abaixo da Fipe"
-              </p>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-200">
+                Veículos Encontrados ({carros.length})
+              </h2>
             </div>
-          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {carros.map((carro) => (
-                <div key={carro.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border-l-4 border-green-500">
-                  <div className="h-48 bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400 text-4xl">🚙</span>
+                <div key={carro.id} className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-orange-500 transition-colors">
+                  <div className="h-40 bg-gray-700 flex items-center justify-center">
+                    <span className="text-gray-500 text-4xl">🚙</span>
                   </div>
-
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
+                    <h3 className="font-semibold text-gray-200 mb-2 line-clamp-2 text-sm">
                       {carro.titulo}
                     </h3>
-
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-1.5 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-500">Preço:</span>
-                        <span className="font-bold text-green-600 text-lg">{carro.preco}</span>
+                        <span className="font-bold text-green-400 text-base">{carro.preco}</span>
                       </div>
-
                       {carro.valorFipe && (
                         <div className="flex justify-between">
-                          <span className="text-gray-500">Tabela Fipe:</span>
-                          <span className="text-gray-700">{carro.valorFipe}</span>
+                          <span className="text-gray-500">Fipe:</span>
+                          <span className="text-gray-400">{carro.valorFipe}</span>
                         </div>
                       )}
-
                       {carro.descontoFipe && (
                         <div className="flex justify-between">
                           <span className="text-gray-500">Economia:</span>
-                          <span className="font-bold text-orange-600">{carro.descontoFipe}</span>
+                          <span className="font-bold text-orange-400">{carro.descontoFipe}</span>
                         </div>
                       )}
-
                       <div className="flex justify-between">
                         <span className="text-gray-500">Ano:</span>
-                        <span className="text-gray-700">{carro.ano}</span>
+                        <span className="text-gray-300">{carro.ano}</span>
                       </div>
-
                       <div className="flex justify-between">
                         <span className="text-gray-500">KM:</span>
-                        <span className="text-gray-700">{carro.km}</span>
+                        <span className="text-gray-300">{carro.km}</span>
                       </div>
-
                       <div className="flex justify-between">
                         <span className="text-gray-500">Local:</span>
-                        <span className="text-gray-700">{carro.localizacao}</span>
+                        <span className="text-gray-300">{carro.localizacao}</span>
                       </div>
                     </div>
-
-                    <a
-                      href={carro.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition-colors"
-                    >
-                      Ver no Marketplace →
-                    </a>
+                    {carro.link && carro.link !== '#' && (
+                      <a
+                        href={carro.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 block w-full text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
+                      >
+                        Ver no Marketplace →
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </section>
+          </>
+        )}
       </main>
     </div>
   );
