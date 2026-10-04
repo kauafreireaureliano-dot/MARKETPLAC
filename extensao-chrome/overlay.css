@@ -1,0 +1,129 @@
+#i9car-overlay {
+  position: fixed;
+  top: 80px;
+  right: 16px;
+  width: 320px;
+  max-height: calc(100vh - 100px);
+  background: #1a1a2e;
+  border: 2px solid #e94560;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 999999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #eee;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#i9car-overlay .i9car-header {
+  background: #16213e;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #333;
+}
+
+#i9car-overlay .i9car-logo {
+  font-weight: bold;
+  color: #e94560;
+  font-size: 14px;
+}
+
+#i9car-overlay .i9car-count,
+#i9car-overlay .i9car-abaixo {
+  font-size: 11px;
+  color: #4ecca3;
+  font-weight: 600;
+}
+
+#i9car-overlay .i9car-abaixo {
+  margin-left: auto;
+  background: #e94560;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+#i9car-overlay .i9car-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 160px);
+  padding: 8px;
+}
+
+#i9car-overlay .i9car-status {
+  font-size: 11px;
+  color: #888;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+#i9car-overlay .i9car-card {
+  background: #16213e;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-left: 3px solid #333;
+  font-size: 12px;
+}
+
+#i9car-overlay .i9car-card.i9car-bom {
+  border-left-color: #4ecca3;
+}
+
+#i9car-overlay .i9car-titulo {
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.3;
+  font-size: 11px;
+}
+
+#i9car-overlay .i9car-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+#i9car-overlay .i9car-preco {
+  color: #4ecca3;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+#i9car-overlay .i9car-desconto {
+  background: #e94560;
+  color: white;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+#i9car-overlay .i9car-acima {
+  color: #666;
+  font-size: 10px;
+}
+
+#i9car-overlay .i9car-fipe {
+  color: #888;
+  font-size: 10px;
+}
+
+#i9car-overlay .i9car-link {
+  display: block;
+  text-align: center;
+  margin-top: 6px;
+  padding: 4px;
+  background: #e94560;
+  color: white !important;
+  text-decoration: none !important;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#i9car-overlay .i9car-link:hover {
+  background: #c73652;
+}
