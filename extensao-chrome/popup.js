@@ -38,11 +38,13 @@ function carregarDados() {
         <div class="titulo">${c.titulo}</div>
         <div class="info">
           <span class="preco">${c.preco}</span>
-          ${c.abaixoFipe
-            ? `<span class="desconto">${c.desconto}% abaixo</span>`
-            : '<span class="acima">Acima da Fipe</span>'}
+          ${c.buscandoFipe
+            ? '<span class="buscando">⏳ Fipe...</span>'
+            : c.abaixoFipe
+              ? `<span class="desconto">${c.desconto}% abaixo</span>`
+              : '<span class="acima">Acima da Fipe</span>'}
         </div>
-        <div class="fipe">Fipe: R$ ${c.valorFipe.toLocaleString('pt-BR')}</div>
+        <div class="fipe">${c.buscandoFipe ? 'Buscando valor na Fipe...' : 'Fipe: R$ ' + c.valorFipe.toLocaleString('pt-BR')}</div>
         <a href="${c.link}" target="_blank">Ver anúncio →</a>
       </div>
     `).join('');
