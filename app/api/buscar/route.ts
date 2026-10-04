@@ -1,85 +1,104 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 
-const execAsync = promisify(exec);
+// Tabela Fipe simplificada (valores médios de referência)
+const TABELA_FIPE: Record<string, number> = {
+  'honda civic': 65000,
+  'toyota corolla': 70000,
+  'hyundai hb20': 55000,
+  'vw gol': 40000,
+  'chevrolet onix': 50000,
+  'fiat uno': 35000,
+  'ford ka': 42000,
+  'renault kwid': 38000,
+  'nissan versa': 60000,
+  'jeep renegade': 80000,
+};
+
+function obterValorFipe(titulo: string): number {
+  const tituloLower = titulo.toLowerCase();
+  for (const [modelo, valor] of Object.entries(TABELA_FIPE)) {
+    if (tituloLower.includes(modelo)) return valor;
+  }
+  // Valor padrão para modelos não listados
+  return 50000;
+}
+
+function extrairPrecoNumerico(precoStr: string): number {
+  return parseFloat(precoStr.replace(/[^\d]/g, '')) || 0;
+}
 
 export async function POST(request: NextRequest) {
- try {
- const config = await request.json();
+  try {
+    const config = await request.json();
 
- // Validar configurações
- if (!config.regiao || !config.precoMaximo) {
- return NextResponse.json(
- { success: false, error: 'Configurações inválidas' },
- { status: 400 }
- );
- }
+    if (!config.regiao || !config.precoMaximo) {
+      return NextResponse.json(
+        { success: false, error: 'Configurações inválidas' },
+        { status: 400 }
+      );
+    }
 
- // Criar arquivo de configuração temporário
- const configPath = path.join(process.cwd(), '..', 'buscar-carros-config.json');
- fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    console.log(`Buscando veículos em ${config.regiao} até R$ ${config.precoMaximo}`);
 
- // Executar script de busca
- const scriptPath = path.join(process.cwd(), '..', 'buscar-carros.js');
+    // Simulação de resultados com filtro abaixo da Fipe
+    const todosVeiculos = [
+      { id: 1, titulo: 'Honda Civic EXL 2.0 Flexone 16V Aut.', preco: 'R$ 45.900', ano: 2018, km: '65.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 2, titulo: 'Toyota Corolla XEi 2.0 Dual VVT-iE Aut.', preco: 'R$ 48.500', ano: 2019, km: '52.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 3, titulo: 'Hyundai HB20S Vision 1.6 Flex Aut.', preco: 'R$ 38.900', ano: 2017, km: '78.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 4, titulo: 'VW Gol 1.6 MSI Trendline', preco: 'R$ 32.000', ano: 2019, km: '45.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 5, titulo: 'Chevrolet Onix 1.4 LT', preco: 'R$ 35.500', ano: 2020, km: '38.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 6, titulo: 'Fiat Uno Vivace 1.0', preco: 'R$ 28.000', ano: 2018, km: '55.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 7, titulo: 'Ford Ka SE 1.5 Ti-VCT', preco: 'R$ 33.000', ano: 2019, km: '42.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 8, titulo: 'Renault Kwid Zen 1.0', preco: 'R$ 29.500', ano: 2020, km: '30.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 9, titulo: 'Nissan Versa Exclusive 1.6', preco: 'R$ 52.000', ano: 2018, km: '60.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+      { id: 10, titulo: 'Jeep Renegade Longitude 1.8', preco: 'R$ 68.000', ano: 2019, km: '48.000 km', localizacao: `${config.regiao} - SP`, link: '#' },
+    ];
 
- console.log('Iniciando busca de veículos...');
+    // Filtrar: preço <= config.precoMaximo E abaixo da Tabela Fipe
+    const veiculosAbaixoFipe = todosVeiculos.filter((veiculo) => {
+      const precoAtual = extrairPrecoNumerico(veiculo.preco);
+      const valorFipe = obterValorFipe(veiculo.titulo);
+      const percentualFipe = (precoAtual / valorFipe) * 100;
 
- // Em produção, isso seria uma chamada a um serviço externo
- // Por enquanto, retornamos dados simulados
- const resultadosSimulados = [
- {
- id: Date.now(),
- titulo: 'Honda Civic EXL 2.0 Flexone 16V Aut.',
- preco: 'R$ 45.900',
- ano: 2018,
- km: '65.000 km',
- localizacao: `${config.regiao} - SP`,
- link: 'https://www.facebook.com/marketplace/item/123456',
- dataBusca: new Date().toLocaleString('pt-BR'),
- },
- {
- id: Date.now() + 1,
- titulo: 'Toyota Corolla XEi 2.0 Dual VVT-iE Aut.',
- preco: 'R$ 48.500',
- ano: 2019,
- km: '52.000 km',
- localizacao: `${config.regiao} - SP`,
- link: 'https://www.facebook.com/marketplace/item/123457',
- dataBusca: new Date().toLocaleString('pt-BR'),
- },
- ];
+      return precoAtual <= config.precoMaximo && percentualFipe < 100;
+    }).map((veiculo) => {
+      const precoAtual = extrairPrecoNumerico(veiculo.preco);
+      const valorFipe = obterValorFipe(veiculo.titulo);
+      const desconto = Math.round(((valorFipe - precoAtual) / valorFipe) * 100);
 
- // Salvar resultados
- const resultadosPath = path.join(process.cwd(), 'data', 'resultados.json');
- const dirPath = path.dirname(resultadosPath);
+      return {
+        ...veiculo,
+        valorFipe: `R$ ${valorFipe.toLocaleString('pt-BR')}`,
+        descontoFipe: `${desconto}% abaixo da Fipe`,
+        dataBusca: new Date().toLocaleString('pt-BR'),
+      };
+    });
 
- if (!fs.existsSync(dirPath)) {
- fs.mkdirSync(dirPath, { recursive: true });
- }
+    // Salvar resultados
+    const resultadosPath = path.join(process.cwd(), 'data', 'resultados.json');
+    const dirPath = path.dirname(resultadosPath);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    fs.writeFileSync(resultadosPath, JSON.stringify({
+      dataBusca: new Date().toLocaleString('pt-BR'),
+      configuracoes: config,
+      totalEncontrado: veiculosAbaixoFipe.length,
+      anuncios: veiculosAbaixoFipe,
+    }, null, 2));
 
- fs.writeFileSync(
- resultadosPath,
- JSON.stringify({
- dataBusca: new Date().toLocaleString('pt-BR'),
- configuracoes: config,
- totalEncontrado: resultadosSimulados.length,
- anuncios: resultadosSimulados,
- })
- );
-
- return NextResponse.json({
- success: true,
- total: resultadosSimulados.length,
- anuncios: resultadosSimulados,
- });
- } catch (error) {
- console.error('Erro na busca:', error);
- return NextResponse.json(
- { success: false, error: 'Erro ao executar busca' },
- { status: 500 }
- );
- }
+    return NextResponse.json({
+      success: true,
+      total: veiculosAbaixoFipe.length,
+      anuncios: veiculosAbaixoFipe,
+    });
+  } catch (error) {
+    console.error('Erro na busca:', error);
+    return NextResponse.json(
+      { success: false, error: 'Erro ao executar busca' },
+      { status: 500 }
+    );
+  }
 }

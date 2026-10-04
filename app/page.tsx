@@ -10,7 +10,8 @@ interface Carro {
   km: string;
   localizacao: string;
   link: string;
-  imagem?: string;
+  valorFipe?: string;
+  descontoFipe?: string;
   dataBusca: string;
 }
 
@@ -24,24 +25,26 @@ interface Configuracao {
 export default function Home() {
   const [carros, setCarros] = useState<Carro[]>([]);
   const [configuracao, setConfiguracao] = useState<Configuracao>({
-    regiao: 'São Paulo',
+    regiao: '',
     precoMaximo: 50000,
     anoMinimo: 2015,
     distanciaKm: 100,
   });
   const [buscando, setBuscando] = useState(false);
   const [ultimaBusca, setUltimaBusca] = useState<string>('');
+  const [erro, setErro] = useState<string>('');
 
-  // Carregar dados salvos
+  // Carregar configurações salvas
   useEffect(() => {
     const savedConfig = localStorage.getItem('configuracao');
     if (savedConfig) {
       setConfiguracao(JSON.parse(savedConfig));
     }
-
     const savedCarros = localStorage.getItem('carrosEncontrados');
     if (savedCarros) {
       setCarros(JSON.parse(savedCarros));
+      const savedData = localStorage.getItem('ultimaBusca');
+      if (savedData) setUltimaBusca(savedData);
     }
   }, []);
 
@@ -51,48 +54,37 @@ export default function Home() {
   };
 
   const iniciarBusca = async () => {
+    if (!configuracao.regiao.trim()) {
+      setErro('Por favor, informe sua cidade/região');
+      return;
+    }
+    setErro('');
     setBuscando(true);
+    setCarros([]);
 
-    // Simulação da busca - em produção, isso chamaria uma API
-    setTimeout(() => {
-      const novosCarros: Carro[] = [
-        {
-          id: 1,
-          titulo: 'Honda Civic EXL 2.0 Flexone 16V Aut.',
-          preco: 'R$ 45.900',
-          ano: 2018,
-          km: '65.000 km',
-          localizacao: 'São Paulo - SP',
-          link: '#',
-          dataBusca: new Date().toLocaleString('pt-BR'),
-        },
-        {
-          id: 2,
-          titulo: 'Toyota Corolla XEi 2.0 Dual VVT-iE Aut.',
-          preco: 'R$ 48.500',
-          ano: 2019,
-          km: '52.000 km',
-          localizacao: 'Guarulhos - SP',
-          link: '#',
-          dataBusca: new Date().toLocaleString('pt-BR'),
-        },
-        {
-          id: 3,
-          titulo: 'Hyundai HB20S Vision 1.6 Flex Aut.',
-          preco: 'R$ 38.900',
-          ano: 2017,
-          km: '78.000 km',
-          localizacao: 'Osasco - SP',
-          link: '#',
-          dataBusca: new Date().toLocaleString('pt-BR'),
-        },
-      ];
+    try {
+      const response = await fetch('/api/buscar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configuracao),
+      });
 
-      setCarros(novosCarros);
-      localStorage.setItem('carrosEncontrados', JSON.stringify(novosCarros));
-      setUltimaBusca(new Date().toLocaleString('pt-BR'));
+      const data = await response.json();
+
+      if (data.success) {
+        setCarros(data.anuncios);
+        localStorage.setItem('carrosEncontrados', JSON.stringify(data.anuncios));
+        const agora = new Date().toLocaleString('pt-BR');
+        setUltimaBusca(agora);
+        localStorage.setItem('ultimaBusca', agora);
+      } else {
+        setErro(data.error || 'Erro ao buscar veículos');
+      }
+    } catch (err) {
+      setErro('Erro de conexão. Tente novamente.');
+    } finally {
       setBuscando(false);
-    }, 3000);
+    }
   };
 
   return (
@@ -102,8 +94,8 @@ export default function Home() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">🚗 I9Car - Painel de Busca</h1>
-              <p className="text-blue-100 text-sm">Automação Marketplace de Veículos</p>
+              <h1 className="text-2xl font-bold"> I9Car - Painel de Busca</h1>
+              <p className="text-blue-100 text-sm">Veículos abaixo da Tabela Fipe</p>
             </div>
             <div className="text-right">
               <p className="text-sm text-blue-100">Última busca</p>
@@ -118,17 +110,23 @@ export default function Home() {
         <section className="mb-8 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">⚙️ Configurações de Busca</h2>
 
+          {erro && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {erro}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Região
+                Região (Cidade)
               </label>
               <input
                 type="text"
                 value={configuracao.regiao}
                 onChange={(e) => salvarConfiguracao({ ...configuracao, regiao: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ex: São Paulo"
+                placeholder="Ex: Arcoverde"
               />
             </div>
 
@@ -184,7 +182,7 @@ export default function Home() {
               </>
             ) : (
               <>
-                🔍 Iniciar Busca no Marketplace
+                🔍 Buscar Veículos Abaixo da Fipe
               </>
             )}
           </button>
@@ -201,6 +199,8 @@ export default function Home() {
                 onClick={() => {
                   setCarros([]);
                   localStorage.removeItem('carrosEncontrados');
+                  localStorage.removeItem('ultimaBusca');
+                  setUltimaBusca('');
                 }}
                 className="text-sm text-red-600 hover:text-red-800"
               >
@@ -216,13 +216,13 @@ export default function Home() {
                 Nenhum veículo encontrado ainda
               </h3>
               <p className="text-gray-500">
-                Clique em "Iniciar Busca" para encontrar oportunidades no Marketplace
+                Configure sua região e clique em "Buscar Veículos Abaixo da Fipe"
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {carros.map((carro) => (
-                <div key={carro.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div key={carro.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border-l-4 border-green-500">
                   <div className="h-48 bg-gray-200 flex items-center justify-center">
                     <span className="text-gray-400 text-4xl">🚙</span>
                   </div>
@@ -237,6 +237,20 @@ export default function Home() {
                         <span className="text-gray-500">Preço:</span>
                         <span className="font-bold text-green-600 text-lg">{carro.preco}</span>
                       </div>
+
+                      {carro.valorFipe && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Tabela Fipe:</span>
+                          <span className="text-gray-700">{carro.valorFipe}</span>
+                        </div>
+                      )}
+
+                      {carro.descontoFipe && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Economia:</span>
+                          <span className="font-bold text-orange-600">{carro.descontoFipe}</span>
+                        </div>
+                      )}
 
                       <div className="flex justify-between">
                         <span className="text-gray-500">Ano:</span>
