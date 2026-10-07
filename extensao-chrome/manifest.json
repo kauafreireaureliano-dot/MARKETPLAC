@@ -1,10 +1,13 @@
 {
   "manifest_version": 3,
   "name": "I9Car - Busca de Veículos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Encontra veículos abaixo da Tabela Fipe no Facebook Marketplace",
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://www.facebook.com/*"],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://parallelum.com.br/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
