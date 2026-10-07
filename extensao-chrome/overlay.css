@@ -140,3 +140,45 @@
 #i9car-overlay .i9car-link:hover {
   background: #c73652;
 }
+
+#i9car-overlay .i9car-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  line-height: 1;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+#i9car-overlay .i9car-close:hover {
+  background: #e94560;
+  color: white;
+}
+
+#i9car-toggle-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #e94560;
+  color: white;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(233, 69, 96, 0.5);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+#i9car-toggle-btn:hover {
+  transform: scale(1.1);
+}

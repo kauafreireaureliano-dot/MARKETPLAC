@@ -228,6 +228,8 @@ function extrairPreco(texto) {
   return parseInt(nums, 10) || 0;
 }
 
+let toggleBtn = null;
+
 function criarOverlay() {
   if (overlayEl) return overlayEl;
   overlayEl = document.createElement('div');
@@ -237,14 +239,32 @@ function criarOverlay() {
       <span class="i9car-logo">🚗 I9Car</span>
       <span class="i9car-count">0 encontrados</span>
       <span class="i9car-abaixo">0 oportunidades</span>
+      <button class="i9car-close" title="Minimizar">✕</button>
     </div>
     <div class="i9car-body">
       <div class="i9car-status">Escaneando anúncios...</div>
       <div class="i9car-lista"></div>
     </div>
   `;
+  overlayEl.querySelector('.i9car-close').addEventListener('click', () => {
+    overlayEl.style.display = 'none';
+    mostrarToggleBtn();
+  });
   document.body.appendChild(overlayEl);
   return overlayEl;
+}
+
+function mostrarToggleBtn() {
+  if (toggleBtn) { toggleBtn.style.display = 'flex'; return; }
+  toggleBtn = document.createElement('button');
+  toggleBtn.id = 'i9car-toggle-btn';
+  toggleBtn.innerHTML = '🚗';
+  toggleBtn.title = 'Abrir painel I9Car';
+  toggleBtn.addEventListener('click', () => {
+    if (overlayEl) overlayEl.style.display = 'flex';
+    toggleBtn.style.display = 'none';
+  });
+  document.body.appendChild(toggleBtn);
 }
 
 function atualizarOverlay() {
